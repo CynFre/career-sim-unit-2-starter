@@ -7,6 +7,7 @@ const modal = document.querySelector(".modal");
 const modalContent = document.querySelector(".modal-content");
 const closeModal = document.querySelector("#close-modal");
 const mainContainer = document.querySelector("main")
+const addPlayerForm = document.querySelector("#new-player-form");
 
 modal.addEventListener("click", function(e){
   // closes modal when you click outside the content area of the modal
@@ -14,8 +15,8 @@ modal.addEventListener("click", function(e){
   if(!e.target.classList.contains("modal-content") ){
 
     modalContent.classList.remove("modal-content-open");
-      modal.classList.remove("modal-open")
-    modalContent.innerHTML = ''
+    modal.classList.remove("modal-open");
+    modalContent.innerHTML = '';
   }
 })
 
@@ -25,7 +26,6 @@ modal.addEventListener("click", function(e){
  */
 const fetchAllPlayers = async () => {
   try {
-    // TODO
     /* Remember, if you're using the modal, when you create the details button,
     in th event handler, create functionality that adds the class 'modal-open' to the modal var and 'modal-content-open' to the
     modalContent var */
@@ -44,7 +44,10 @@ const fetchAllPlayers = async () => {
  */
 const fetchSinglePlayer = async (playerId) => {
   try {
-    // TODO
+    const res = await fetch(`${API_URL}/players/${playerId}`);
+    const json = await res.json();
+    console.log(json.data.player);
+    return json.data.player;
   } catch (err) {
     console.error(`Oh no, trouble fetching player #${playerId}!`, err);
   }
@@ -57,7 +60,13 @@ const fetchSinglePlayer = async (playerId) => {
  */
 const addNewPlayer = async (playerObj) => {
   try {
-    // TODO
+    const res = await fetch(`${API_URL}/players/`, {
+      method:"POST", 
+      body:JSON.stringify(playerObj),
+      headers:{"Content-type":"application/json"}
+    });
+    const json = await res.json();
+    return json;
   } catch (err) {
     console.error("Oops, something went wrong with adding that player!", err);
   }
@@ -69,7 +78,12 @@ const addNewPlayer = async (playerObj) => {
  */
 const removePlayer = async (playerId) => {
   try {
-    // TODO
+    alert("Removing Player" + playerId);
+    const res = await fetch(`${API_URL}/players/${playerId}`, {
+      method: "Delete",
+    });
+    const json = await res.json();
+    return json;
   } catch (err) {
     console.error(
       `Whoops, trouble removing player #${playerId} from the roster!`,
@@ -110,7 +124,10 @@ const renderAllPlayers = (playerList) => {
     playerName.innerText = player.name;
     const detailsButton = document.createElement("button");
     detailsButton.innerText = "See Details";
-    detailsButton.addEventListener("click", function() {
+    detailsButton.addEventListener("click", async function() {
+      const playerData = await fetchSinglePlayer(player.id);
+      renderSinglePlayer(playerData);
+      console.log(playerData);
       modal.classList.add("modal-open");
       modalContent.classList.add("modal-content-open");
     });
@@ -150,8 +167,59 @@ const renderAllPlayers = (playerList) => {
  * @param {Object} player an object representing a single player
  */
 const renderSinglePlayer = (player) => {
-  // TODO
+ // delete player.team.name;
+  const playerName = document.createElement("h3");
+  playerName.innerText = player.name;
+  const playerBreed = document.createElement("p");
+  playerBreed.innerText = player.breed;
+  const playerImg = document.createElement("img");
+  playerImg.src = player.imageUrl;
+  playerImg.alt = player.name;
+  playerImg.width = 150;
+  const playerId = document.createElement("p");
+  playerId.innerText = `Player ID: ${player.id}`;
+  const teamName = document.createElement("p");
+  teamName.innerText = `Team: ${player.team?.name ? player.team.name : "Unassigned"}`;
+  const removeButton = document.createElement("button");
+  removeButton.innerText = "Remove from Roster";
+  removeButton.addEventListener("click", async function (e) {
+    e.stopPropagation();
+    const result = await removePlayer(player.id); 
+    if(result.success) {
+      alert("Player removed successfully!");
+      modalContent.classList.remove("modal-content-open");
+      modal.classList.remove("modal-open");
+      modalContent.innerHTML = '';
+      const players = await fetchAllPlayers();
+      renderAllPlayers(players);
+    }
+  });
+  modalContent.replaceChildren(playerName, playerBreed, playerImg, playerId, teamName, removeButton);
+
 };
+
+
+const handleAddPlayerSubmit = async(e) => {
+  e.preventDefault();
+  const name = document.querySelector("#name-input").value;
+  const breed = document.querySelector("#breed-input").value;
+  const status = document.querySelector("select").value;
+  const imageUrl = document.querySelector("#image-url-input").value
+   ? document.querySelector("#image-url-input").value: "https://r.ddmcdn.com/w_1010/s_f/o_1/cx_0/cy_4/cw_1010/ch_1515/APL/uploads/2019/12/Bert-PBXVI.jpg"
+
+   const newPlayerData = { name, breed, status, imageUrl };
+   console.log(newPlayerData);
+   const result  = await addNewPlayer(newPlayerData);
+   if(result.success) {
+    alert("Player successfully added! Please see the new player at the bottom of the page.");
+    const players = await fetchAllPlayers();
+    renderAllPlayers(players);
+   } else {
+    alert("Something went wrong. Try again later");
+   }
+ };
+ addPlayerForm.addEventListener("submit", handleAddPlayerSubmit);
+
 
 /**
  * Fills in `<form id="new-player-form">` with the appropriate inputs and a submit button.
@@ -160,12 +228,89 @@ const renderSinglePlayer = (player) => {
  */
 const renderNewPlayerForm = () => {
   try {
-    // TODO
-  } catch (err) {
+    //UI for name label and input
+    // const nameLabel = document.createElement("label");
+    // nameLabel.innerText = "Player Name";
+    // nameLabel.setAttribute("for", "name-input");
+    // const nameInput = document.createElement("input");
+    // nameInput.type = "text";
+    // nameInput.id = "name-input";
+    // const breedLabel = document.createElement("label");
+    // breedLabel.innerText = "Player Breed";
+    // breedLabel.setAttribute("for", "breed-input");
+    // const breedInput = document.createElement("input");
+    // breedInput.type = "text";
+    // breedInput.id = "breed-input";
+    // const statusInput = document.createElement("select");
+    // const benchOption = document.createElement("option");
+    // benchOption.innerText = "bench";
+    // benchOption.setAttribute("selected", "selected");
+    // const fieldOption = document.createElement("option");
+    // fieldOption.innerText = "field";
+    //statusInput.replaceChildren(benchOption, fieldOption);
+    const options = [
+      {innerText: "bench", value: "bench"},
+      {innerText: "field", value: "field"}
+    ];
+    const statusMenu = createSelectWithOptions(options, "bench");
+    const submitButton = document.createElement("button");
+    submitButton.innerText = "Submit";
+
+    const nameInputLabelObj = createTextInputsWithLabel("Player Name", "name-input");
+    const breedInputLabelObj = createTextInputsWithLabel("Player Breed", "breed-input");
+    const imgLabelObj = createTextInputsWithLabel("imageURL", "image-url-input");
+
+    // console.log(imgLabelObj.label);
+    // console.log(imgLabelObj.textInput);
+
+    // const imgLabel = document.createElement("label");
+    // imgLabel.innerText = "Image URL";
+    // imgLabel.setAttribute("for", "image-url-input");
+    // const imgInput = document.createElement("input");
+    // imgInput.type = "text";
+    // imgInput.id = "image-url-input";
+    
+    addPlayerForm.replaceChildren(nameInputLabelObj.label, nameInputLabelObj.textInput, breedInputLabelObj.label, breedInputLabelObj.textInput, 
+      statusMenu, imgLabelObj.label, imgLabelObj.textInput, submitButton);
+  } catch(err) {
     console.error("Uh oh, trouble rendering the new player form!", err);
   }
 };
 
+
+const createSelectWithOptions = (options, defaultValue) => {
+  // options will be an array with {innerText, value}
+  const select = document.createElement("select");
+  const optionsHTML = options.map((option) => {
+    const newOptionTag = document.createElement("option");
+    newOptionTag.innerText = option.innerText;
+    newOptionTag.value = option.value;
+    if(option.value === defaultValue) {
+      newOptionTag.setAttribute("selected", "selected");
+    }
+    return newOptionTag;
+  });
+  console.log(optionsHTML);
+  select.replaceChildren(...optionsHTML);
+  return select;
+};
+
+
+
+
+
+
+
+/*Helper function to create Text inputs */
+const createTextInputsWithLabel = (labelInnerText, inputIdentifier) => {
+  const label = document.createElement("label");
+  label.innerText = labelInnerText;
+  label.setAttribute("for", inputIdentifier);
+  const textInput = document.createElement("input");
+  textInput.type = "text";
+  textInput.id = inputIdentifier;
+  return{label, textInput};
+};
 
 
 
@@ -174,8 +319,9 @@ const renderNewPlayerForm = () => {
  */
 const init = async () => {
   const players = await fetchAllPlayers();
+  console.log(players);
   renderAllPlayers(players);
-
+  
   renderNewPlayerForm();
 };
 
